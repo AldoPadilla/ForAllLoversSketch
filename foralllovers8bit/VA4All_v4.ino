@@ -1,3 +1,5 @@
+
+
 /*
  Example: Control a WTV020-SD-16P module to play voices from an Arduino board.
  Created by Diego J. Arevalo, August 6th, 2012.
@@ -5,7 +7,17 @@
  */
 
 #include <Wtv020sd16p.h>
+//#include <Servo.h>
+#include <VarSpeedServo.h>
 
+const int buttonPin = 11;
+const int ledPin = 13;
+
+int buttonState = 0;
+
+boolean canAcceptButtonPress = true;
+int millisecondsToWait = 2000;
+int startWaitTime = 0;
 int resetPin = 2;  // The pin number of the reset pin.
 int clockPin = 3;  // The pin number of the clock pin.
 int dataPin = 4;  // The pin number of the data pin.
@@ -22,16 +34,16 @@ Wtv020sd16p wtv020sd16p(resetPin,clockPin,dataPin,busyPin);
 
 long randNumber;
 
+//Servo myservo;
+VarSpeedServo myservo;
 
 void setup() {
-  //Initializes the module.
+  pinMode(ledPin, OUTPUT);
+  pinMode(buttonPin, INPUT);
+    //Initializes the module.
   wtv020sd16p.reset();
-}
-
-void loop(){
-  
-      playa();
-
+  myservo.attach(9);
+  Serial.begin(9600);
 }
 
 void playa() {
@@ -66,4 +78,33 @@ void playa() {
   //wtv020sd16p.stopVoice();
 }
 
-
+void loop(){
+  buttonState = digitalRead(buttonPin);
+  if (buttonState == HIGH){
+    
+     startWaitTime = millis();
+     
+    if(canAcceptButtonPress) {
+    
+      //DO ALL YOU NEED TO DO HERE
+      Serial.println(buttonState);
+      digitalWrite(ledPin, HIGH);
+      playa();
+      myservo.write(90, 25, true);
+      delay(100);
+      myservo.write(5, 25, true);
+      delay(100);
+      myservo.write(90, 25, true);
+      
+      canAcceptButtonPress = false;
+    }
+    
+  }else if(!canAcceptButtonPress) {
+    if(millis() - startWaitTime > millisecondsToWait){
+      canAcceptButtonPress = true;
+    }
+  }else{
+    digitalWrite(ledPin, LOW);
+    myservo.write(5, 30, true);
+  }
+}
